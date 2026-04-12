@@ -13,6 +13,8 @@ Your goal is to:
 
 Replace this paragraph with your own summary of what your version does.
 
+This project is a small music recommender that scores songs based on how well they match a user's taste. It uses content-based filtering, which means it looks at the actual attributes of each song (like mood and energy) and compares them to what the user said they want. It doesn't track what other users are doing — it just focuses on the one user's profile. The main thing it prioritizes is getting the emotional vibe right, so mood and energy are weighted the most.
+
 ---
 
 ## How The System Works
@@ -29,6 +31,68 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+Real recommenders like Spotify use a mix of collaborative filtering (what do similar users listen to?) and content-based filtering (what does this song actually sound like?). My version only does content-based filtering, it takes the user's preferences and gives every song a score based on how closely it matches.
+
+Each `Song` has these features: id, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, and acousticness. The ones actually used for scoring are genre, mood, energy, and acousticness. Valence, tempo, and danceability are stored but not part of the score yet, they could be added later to make it more precise.
+
+The `UserProfile` keeps track of four things: what genre the user likes, what mood they're looking for, what energy level they want (a number from 0 to 1), and whether they prefer acoustic or electronic-sounding music.
+
+The scoring works like this, each song gets a score in four categories and they're added up with different weights:
+- mood match is worth 35% — if the song's mood matches what the user wants, full points, otherwise zero
+- energy fit is worth 30% — calculated as `1.0 - |song.energy - user.target_energy|` so closer is always better
+- genre match is worth 20% — same as mood, either it matches or it doesn't
+- acoustic fit is worth 15% — rewards high acousticness if the user likes acoustic, low acousticness if not
+
+To pick recommendations, every song gets scored and then sorted from highest to lowest. The top k songs (default 5) get returned.
+
+### Algorithm Recipe
+
+Here's the finalized scoring formula. Each song gets a score out of 5.0 total:
+
+- mood match → +2.0 points (binary, either the mood matches or it doesn't)
+- energy fit → up to +1.5 points, calculated as `1.5 × (1 - |song.energy - user.energy|)` so songs closer to the user's target energy get more points
+- genre match → +1.0 points (also binary)
+- acoustic fit → up to +0.5 points, rewards high acousticness if the user likes acoustic sound, or low acousticness if they prefer electronic
+
+I decided to weight mood higher than genre because if the vibe is wrong the song just doesn't feel right even if it's technically the right genre. A chill folk song is better for a chill user than an intense lofi track even though lofi is "closer" on genre.
+
+### Potential Biases
+
+Some things I think might go wrong with this system:
+
+- It might over-favor the same 2-3 songs every time if they happen to perfectly match the user profile. There's no way to add variety right now, so the top results could get repetitive.
+- The mood matching is all-or-nothing which feels too strict. "Relaxed" and "chill" are basically the same thing but the system treats them as completely different, which means good songs probably get penalized just because of how the mood label was written.
+- Genre can also block good recommendations. A great ambient or folk track might match the user's energy and mood perfectly but still score lower than a mediocre lofi track just because of the genre label. That doesn't feel right.
+- The acoustic fit is always included in the score even if the user doesn't really have a strong preference either way. It could be pushing down songs the user would actually enjoy.
+
+### Data Flow Diagram
+
+```mermaid
+flowchart TD
+    A([User Preferences\ngenre · mood · energy · likes_acoustic]) --> B
+
+    B[(songs.csv\n18 songs)] --> C
+
+    C[Load all songs into memory] --> D
+
+    D{For each song in catalog} --> E
+
+    E[Score the song\n\n+2.0 if mood matches\n+1.5 × energy proximity\n+1.0 if genre matches\n+0.5 × acoustic fit] --> F
+
+    F[Attach score to song] --> G
+
+    G{More songs?}
+    G -- Yes --> D
+    G -- No --> H
+
+    H[Sort all scored songs\nhighest → lowest] --> I
+
+    I[Return Top K results] --> J
+
+    J([Output\nRanked recommendations\nwith scores and explanations])
+```
+
+Terminal Screenshot path: data/screenshot.png
 ---
 
 ## Getting Started
