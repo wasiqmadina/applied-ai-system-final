@@ -1,0 +1,21 @@
+# Reflection: Comparing User Profile Outputs
+
+## Chill Lofi vs. High-Energy Pop
+
+These two profiles are basically opposites and the results showed that clearly. The chill lofi listener got Library Rain, Midnight Coding, and Spacewalk Thoughts at the top — all soft, slow, acoustic songs between 60 and 78 BPM. The high-energy pop fan got Sunrise City, Rooftop Lights, and Gym Hero — all fast, loud, and electronic. The system switched completely because both the mood and energy signals flipped at the same time. When you ask for chill and 0.38 energy you get one end of the catalog, and when you ask for happy and 0.85 energy you get the other end. This makes sense because the two biggest scoring signals (mood and energy) are both pointing in opposite directions for each profile.
+
+## High-Energy Pop vs. Deep Intense Rock
+
+These two look similar on paper — both want high energy — but the mood is different (happy vs. intense) and that made a big difference. For the pop fan, Sunrise City won easily because it matched both mood and genre. For the rock listener, Storm Runner was the clear winner. The interesting thing is that Gym Hero (a pop song) showed up at #2 for the rock profile because it's tagged as "intense" — not because it's rock. So the system doesn't really understand that a pop song and a rock song feel different even if they have similar energy. It just sees the mood label and gives points. That's a real limitation — "intense pop" and "intense rock" are not the same experience but the system treats them identically.
+
+## Deep Intense Rock vs. Edge Case: High Energy + Sad Mood
+
+This comparison shows what happens when the user's preferences don't conflict vs. when they do. For the rock listener, the top results were all logically consistent — high energy songs with the intense mood. For the sad/high-energy profile, the results looked broken. 3AM Feelings was still #1 even though it has energy 0.51 and the user wanted 0.9. The reason is that 3AM Feelings is the only sad song in the whole catalog. So no matter what energy the user asks for, if they want "sad" that song always wins because it's the only one that scores mood points. This shows that the system's quality is completely dependent on having enough songs in each mood category. If there's only one song for a mood, the system has no way to pick the best one — it just picks the only one.
+
+## Edge Case: High Energy + Sad Mood vs. Low Energy + Angry Mood
+
+Both of these profiles have conflicting preferences — one wants high energy but a calm/dark mood, the other wants low energy but an aggressive mood. The sad profile's top result (3AM Feelings) at least matched on mood and genre even if the energy was wrong. But for the low energy + angry profile the results were genuinely strange — after the weight change, calm classical and ambient songs ranked above Shatter the Wall (the actual metal song) because they were closer in energy to 0.1. This means the system recommended Moonlight Sonata Reimagined (a classical piece) to someone who said they wanted metal and angry music, just because its energy was closer to the target. That doesn't feel right at all. It shows that when preferences contradict each other, the system doesn't know how to handle it — it just picks whichever signal is currently weighted highest and optimizes for that, ignoring how weird the final result looks.
+
+## Why Does "Gym Hero" Keep Appearing for the Happy Pop Profile?
+
+Gym Hero is a pop song with high energy (0.93) and it's tagged as "intense" — not "happy." But it still shows up at #3 for the happy pop profile because it gets the genre bonus (it's pop) and its energy is very close to the target 0.85. So even though the mood is wrong (intense vs. happy) the system still gives it a lot of points for being the right genre and the right energy level. Imagine you asked a friend to recommend happy pop music and they handed you a gym workout track — technically it's pop and it's energetic, but the vibe is completely off. That's exactly what the system is doing. It's matching on the labels it can measure (genre, energy number) but it can't measure the actual feeling of a song, which is what matters most to a real listener.

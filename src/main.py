@@ -36,12 +36,76 @@ def main() -> None:
         # A common pattern is: (song, score, explanation)
         song, score, explanation = rec
         print(f"\n#{i}  {song['title']} by {song['artist']}")
-        print(f"    Score : {score:.2f} / 5.0")
+        print(f"    Score : {score:.2f} / 6.0")
         print(f"    Genre : {song['genre']}  |  Mood: {song['mood']}  |  Energy: {song['energy']}")
         reasons = explanation.split(" | ")
         for reason in reasons:
             print(f"      + {reason}")
 
+    print("\n" + "=" * 50)
+
+    # --- Profile 2: High-Energy Pop ---
+    profile2 = {"genre": "pop", "mood": "happy", "energy": 0.85, "likes_acoustic": False}
+    recs2 = recommend_songs(profile2, songs, k=5)
+    print("\n" + "=" * 50)
+    print("  High-Energy Pop Fan")
+    print(f"  Genre: {profile2['genre']} | Mood: {profile2['mood']} | Energy: {profile2['energy']}")
+    print("=" * 50)
+    for i, rec in enumerate(recs2, start=1):
+        song, score, explanation = rec
+        print(f"\n#{i}  {song['title']} by {song['artist']}")
+        print(f"    Score : {score:.2f} / 6.0")
+        print(f"    Genre : {song['genre']}  |  Mood: {song['mood']}  |  Energy: {song['energy']}")
+        for reason in explanation.split(" | "):
+            print(f"      + {reason}")
+    print("\n" + "=" * 50)
+
+    # --- Profile 3: Deep Intense Rock ---
+    profile3 = {"genre": "rock", "mood": "intense", "energy": 0.92, "likes_acoustic": False}
+    recs3 = recommend_songs(profile3, songs, k=5)
+    print("\n" + "=" * 50)
+    print("  Deep Intense Rock Listener")
+    print(f"  Genre: {profile3['genre']} | Mood: {profile3['mood']} | Energy: {profile3['energy']}")
+    print("=" * 50)
+    for i, rec in enumerate(recs3, start=1):
+        song, score, explanation = rec
+        print(f"\n#{i}  {song['title']} by {song['artist']}")
+        print(f"    Score : {score:.2f} / 6.0")
+        print(f"    Genre : {song['genre']}  |  Mood: {song['mood']}  |  Energy: {song['energy']}")
+        for reason in explanation.split(" | "):
+            print(f"      + {reason}")
+    print("\n" + "=" * 50)
+
+    # --- Edge Case 1: High energy but sad mood (conflicting vibe) ---
+    edge1 = {"genre": "r&b", "mood": "sad", "energy": 0.9, "likes_acoustic": False}
+    recs_e1 = recommend_songs(edge1, songs, k=5)
+    print("\n" + "=" * 50)
+    print("  Edge Case: High Energy + Sad Mood")
+    print(f"  Genre: {edge1['genre']} | Mood: {edge1['mood']} | Energy: {edge1['energy']}")
+    print("=" * 50)
+    for i, rec in enumerate(recs_e1, start=1):
+        song, score, explanation = rec
+        print(f"\n#{i}  {song['title']} by {song['artist']}")
+        print(f"    Score : {score:.2f} / 6.0")
+        print(f"    Genre : {song['genre']}  |  Mood: {song['mood']}  |  Energy: {song['energy']}")
+        for reason in explanation.split(" | "):
+            print(f"      + {reason}")
+    print("\n" + "=" * 50)
+
+    # --- Edge Case 2: Low energy + angry mood (contradictory vibe) ---
+    edge2 = {"genre": "metal", "mood": "angry", "energy": 0.1, "likes_acoustic": True}
+    recs_e2 = recommend_songs(edge2, songs, k=5)
+    print("\n" + "=" * 50)
+    print("  Edge Case: Low Energy + Angry Mood")
+    print(f"  Genre: {edge2['genre']} | Mood: {edge2['mood']} | Energy: {edge2['energy']}")
+    print("=" * 50)
+    for i, rec in enumerate(recs_e2, start=1):
+        song, score, explanation = rec
+        print(f"\n#{i}  {song['title']} by {song['artist']}")
+        print(f"    Score : {score:.2f} / 6.0")
+        print(f"    Genre : {song['genre']}  |  Mood: {song['mood']}  |  Energy: {song['energy']}")
+        for reason in explanation.split(" | "):
+            print(f"      + {reason}")
     print("\n" + "=" * 50)
 
 

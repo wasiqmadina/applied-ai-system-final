@@ -69,7 +69,7 @@ def load_songs(csv_path: str) -> List[Dict]:
     return songs
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """Score a single song against user preferences and return (score out of 5.0, list of reason strings)."""
+    """Score a single song against user preferences and return (score out of 6.0, list of reason strings)."""
     score = 0.0
     reasons = []
 
@@ -78,15 +78,15 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
         score += 2.0
         reasons.append(f"mood match: '{song['mood']}' (+2.0)")
 
-    # energy fit — worth up to 1.5 points (proximity based)
-    energy_fit = 1.5 * (1.0 - abs(song["energy"] - user_prefs["energy"]))
+    # energy fit — worth up to 3.0 points (doubled from 1.5 to make energy more decisive)
+    energy_fit = 3.0 * (1.0 - abs(song["energy"] - user_prefs["energy"]))
     score += energy_fit
-    reasons.append(f"energy fit: {energy_fit:.2f}/1.5 (song={song['energy']}, target={user_prefs['energy']})")
+    reasons.append(f"energy fit: {energy_fit:.2f}/3.0 (song={song['energy']}, target={user_prefs['energy']})")
 
-    # genre match — worth up to 1.0 points (binary)
+    # genre match — worth up to 0.5 points (halved from 1.0 — genre is a preference not a dealbreaker)
     if song["genre"] == user_prefs["genre"]:
-        score += 1.0
-        reasons.append(f"genre match: '{song['genre']}' (+1.0)")
+        score += 0.5
+        reasons.append(f"genre match: '{song['genre']}' (+0.5)")
 
     # acoustic fit — worth up to 0.5 points (continuous)
     if user_prefs["likes_acoustic"]:
