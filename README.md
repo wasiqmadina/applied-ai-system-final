@@ -1,35 +1,20 @@
-# 🎵 Music Recommender Simulation
+# AI Music Recommender
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
+**Original project:** This builds on the Music Recommender Simulation project ([original repo](https://github.com/wasiqmadina/ai110-module3show-musicrecommendersimulation-starter)). The original version scored songs against a user profile using a weighted formula and returned ranked recommendations from an 18-song catalog. There was no AI in it, just math.
 
-Your goal is to:
+**This version** adds an AI explanation layer on top of that same scoring system. After the algorithm picks the top songs, it sends the results to the Groq API (Llama 3) which writes a plain English explanation of why each song was recommended. I also added a guardrail that checks the AI response before showing it, and a test harness that runs all five user profiles and shows pass/fail for each one.
 
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
+---
 
-Replace this paragraph with your own summary of what your version does.
+## Demo Walkthrough
 
-This project is a small music recommender that scores songs based on how well they match a user's taste. It uses content-based filtering, which means it looks at the actual attributes of each song (like mood and energy) and compares them to what the user said they want. It doesn't track what other users are doing — it just focuses on the one user's profile. The main thing it prioritizes is getting the emotional vibe right, so mood and energy are weighted the most.
+[Watch the video walkthrough on Loom](https://www.loom.com/share/0f47e715677048e48ac960d2ac3c7021)
 
 ---
 
 ## How The System Works
-
-Explain your design in plain language.
-
-Some prompts to answer:
-
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
-
-You can include a simple diagram or bullet list if helpful.
 
 Real recommenders like Spotify use a mix of collaborative filtering (what do similar users listen to?) and content-based filtering (what does this song actually sound like?). My version only does content-based filtering, it takes the user's preferences and gives every song a score based on how closely it matches.
 
@@ -44,6 +29,8 @@ The scoring works like this, each song gets a score in four categories and they'
 - acoustic fit is worth 15% — rewards high acousticness if the user likes acoustic, low acousticness if not
 
 To pick recommendations, every song gets scored and then sorted from highest to lowest. The top k songs (default 5) get returned.
+
+Once the top 5 are picked, the results get sent to the Groq API in `src/ai_explainer.py` which uses Llama 3 to write a plain English explanation of why each song was recommended. Before that gets printed there's a guardrail that checks if the response actually looks valid — if not it just shows the raw scores instead so the user still gets something.
 
 ### Algorithm Recipe
 
@@ -89,7 +76,13 @@ flowchart TD
 
     I[Return Top K results] --> J
 
-    J([Output\nRanked recommendations\nwith scores and explanations])
+    J[Claude API\nai_explainer.py\nGenerates natural-language explanation] --> K
+
+    K{Output Guardrail\nValidate response} -- valid --> L
+    K -- invalid / error --> M
+
+    L([Natural language explanation\nprinted to terminal])
+    M([Fallback: raw score printout])
 ```
 
 ### Terminal Output — Top 5 Recommendations (Chill Lofi Profile)
@@ -128,7 +121,18 @@ flowchart TD
 pip install -r requirements.txt
 ```
 
-3. Run the app:
+3. Add your Groq API key (free at console.groq.com)
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and replace the placeholder with your key:
+```
+GROQ_API_KEY=your-key-here
+```
+
+4. Run the app:
 
 ```bash
 python -m src.main
@@ -136,23 +140,109 @@ python -m src.main
 
 ### Running Tests
 
-Run the starter tests with:
-
 ```bash
-pytest
+pytest                        # unit tests
+python -m tests.test_harness  # full pipeline pass/fail for all 5 profiles
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+---
+
+## Sample Interactions
+
+Each run processes all five hardcoded profiles. Below are three examples of real AI output from the system.
+
+**Profile: Chill Lofi Listener** — `genre: lofi | mood: chill | energy: 0.38 | likes_acoustic: True`
+```
+Based on your taste profile, here's why each recommended song caught our attention:
+
+1. "Library Rain" by Paper Lanterns - This song was highly recommended because it perfectly
+matches your lofi preferences with its chill mood and low energy level of 0.35, creating a
+peaceful atmosphere. The song's acousticness of 0.86 also aligns with your love for acoustic music.
+
+2. "Midnight Coding" by LoRoom - This song was also a top choice due to its lofi genre and
+chill mood, which fits your taste perfectly. Although its energy level is slightly higher than
+"Library Rain," at 0.42, it's still within your comfort zone.
+
+3. "Spacewalk Thoughts" by Orbit Bloom - This ambient song has a chill mood and low energy
+level, making it an excellent match for your profile. The song's high acousticness of 0.92
+also caters to your love for acoustic music, creating a soothing atmosphere.
+```
+
+**Profile: High-Energy Pop Fan** — `genre: pop | mood: happy | energy: 0.85 | likes_acoustic: False`
+```
+Based on your pop-loving, happy, and energetic taste, I'd love to break down each of these
+song recommendations for you:
+
+1. "Sunrise City" by Neon Echo - This upbeat pop track is a great fit for you, with a happy
+mood and energy level that matches your preferences. The slightly acoustic touch adds a nice
+depth to the song without sacrificing the energetic vibe.
+
+2. "Rooftop Lights" by Indigo Parade - This indie pop song shares your love for happy vibes
+and a moderate energy level, making it a great match. The song's acoustic elements also give
+it a warm, organic feel that should appeal to you.
+
+3. "Gym Hero" by Max Pulse - Although "Gym Hero" has a more intense mood than you typically
+prefer, its extremely high energy level might still appeal to you. However, its minimalist,
+almost completely synthesized sound might not be the perfect fit for your taste.
+```
+
+**Profile: Edge Case — High Energy + Sad Mood** — `genre: r&b | mood: sad | energy: 0.90 | likes_acoustic: False`
+```
+1. "3AM Feelings" by Soleil - This song topped the list because it perfectly matches your
+love for R&B and the sad mood you're in. Its low energy level of 0.51 is still above your
+threshold, and while it's relatively acoustic, it's not so much that it detracts from the R&B vibe.
+
+2. "Storm Runner" by Voltline - This song has a high energy level that's close to what you
+like (0.91), but it's a rock genre, which is a departure from your R&B preference.
+
+3. "Shatter the Wall" by Iron Veil - This metal song's angry mood and high energy level of
+0.97 are the exact opposite of what you're looking for in terms of mood. Its low acousticness
+is a plus, but unfortunately the genre and mood are not a good match for you.
+```
+
+---
+
+## Design Decisions
+
+**Why keep hardcoded profiles instead of free-text input?** I thought about letting users type what they want but that would need another AI call just to turn the text into structured preferences, and that adds more ways for things to break. The scoring already works well with structured input so I kept it simple.
+
+**Why use the AI for explanation and not scoring?** The scoring formula is transparent, you can see exactly why each song ranked where it did. If I replaced that with an AI it would just be a black box and I wouldn't be able to explain what happened. So I kept the algorithm doing the ranking and just used the AI to write the explanation in plain English.
+
+**Why add a guardrail with fallback?** Because the first test run proved I needed it. The model name was wrong and every single profile errored out. Without the fallback the whole program would have just crashed or printed nothing. The guardrail means the user always gets something even when the API fails.
+
+---
+
+## Testing Summary
+
+The test harness (`tests/test_harness.py`) runs all 5 profiles through the full pipeline and checks 4 things per profile: correct number of results, valid score range, results sorted by score, and a non-empty AI explanation.
+
+**Results: 5/5 profiles passed.**
+
+The first run failed entirely because the Groq model name (`llama3-8b-8192`) was decommissioned — the guardrail caught this and fell back to raw scores for every profile. After updating the model to `llama-3.1-8b-instant` all profiles passed. During the passing run, profiles 3–5 hit Groq's free-tier rate limit (429 errors) but the SDK retried automatically and recovered without any code changes. The guardrail was also tested manually by temporarily passing an empty string — it correctly routed to the fallback output instead of printing nothing.
+
+**Example of guardrail fallback triggering** (what the user sees when the API is unavailable):
+```
+(AI explanation unavailable — showing raw scores)
+
+#1  Library Rain by Paper Lanterns
+    Score: 5.84/6.0
+    + mood match: 'chill' (+2.0)
+    + energy fit: 2.91/3.0 (song=0.35, target=0.38)
+    + genre match: 'lofi' (+0.5)
+    + acoustic fit: 0.43/0.5 (acousticness=0.86)
+
+#2  Midnight Coding by LoRoom
+    Score: 5.73/6.0
+    + mood match: 'chill' (+2.0)
+    + energy fit: 2.88/3.0 (song=0.42, target=0.38)
+    + genre match: 'lofi' (+0.5)
+    + acoustic fit: 0.35/0.5 (acousticness=0.71)
+```
+The user still gets useful output instead of a crash or a blank screen.
 
 ---
 
 ## Experiments You Tried
-
-Use this section to document the experiments you ran. For example:
-
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
 
 The main experiment I ran was doubling the energy weight from 1.5 to 3.0 and halving the genre weight from 1.0 to 0.5. The max score changed from 5.0 to 6.0. For normal profiles like chill lofi and intense rock, the top results stayed the same — Library Rain and Storm Runner still ranked first. The biggest change was in the edge cases. For the low energy plus angry profile, Shatter the Wall dropped from #1 to #3 because the energy penalty became too large to overcome with just a mood and genre match. Calm songs like Moonlight Sonata and Spacewalk Thoughts moved up because their energy was closer to the target of 0.1. For the sad plus high-energy profile nothing changed because there was still only one sad song in the catalog. That showed me the energy weight shift helped in one case but couldn't fix a problem that was really about missing data.
 
@@ -162,16 +252,6 @@ I also tested five different user profiles including two adversarial edge cases 
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
-
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
-
 - It only works on 18 songs so results are very repetitive and certain moods only have one song representing them
 - Mood matching is binary so similar moods like chill and relaxed are treated as completely different
 - It does not understand lyrics, language, tempo patterns, or anything about how the music actually sounds — just the labels assigned to it
@@ -180,126 +260,35 @@ You will go deeper on this in your model card.
 
 ---
 
+## Responsible AI
+
+**What are the limitations or biases in your system?**
+A big one is that mood matching is all or nothing. So like if a song is labeled "relaxed" and the user wants "chill" the system treats those as completely different even though they basically mean the same thing. That felt wrong when I tested it. Also the catalog is only 18 songs and some moods only have one song in it so the algorithm doesn't really have options for those profiles no matter what. Another thing I noticed is that the AI explanation can sound really confident even when the recommendations are bad. For the edge cases the output reads like the system is doing a good job but it's actually just picking the least bad option from a small pool.
+
+**Could your AI be misused, and how would you prevent that?**
+For music recommendations probably not that serious but the pattern of using an algorithm to rank things and then having an LLM explain it in a convincing way is used in bigger things like hiring or loan decisions. In those cases if the algorithm is biased the LLM explanation could make an unfair decision sound totally reasonable and the person reading it wouldn't know. I think the way to prevent that is to always show the actual scores and reasons behind the scenes, not just the AI's summary. That's why I kept the fallback output that shows the raw scores. At least then someone can see what actually happened.
+
+**What surprised you while testing?**
+Honestly I was surprised when the first test run completely failed because the model name I used (`llama3-8b-8192`) was decommissioned by Groq. I didn't know models could just stop working like that. The whole system errored out and fell back to raw scores for every single profile. I had to look up what the current model name was and swap it out. After that it worked fine but it made me realize you can't just assume the AI service you're using is going to stay the same. Also the rate limiting thing surprised me a little, the test harness hit the free tier limit mid run but the SDK retried automatically so all 5 profiles still passed which was a relief.
+
+**Collaboration with AI**
+I used Claude Code as an AI assistant to help me build this. Something that was actually really helpful was when it suggested adding the guardrail with a fallback instead of just crashing if the API fails. I wouldn't have thought to do that on my own, I probably would have just let it error out. That made the system a lot more stable. Something that was wrong was when it gave me the model name `llama3-8b-8192` which turned out to be decommissioned. That broke everything on the first run and I had to go fix it manually. So like even when the AI is helping you build something you still have to double check the details it gives you especially anything about external services.
+
+---
+
 ## Reflection
 
-Read and complete `model_card.md`:
-
 [**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
 
 The biggest learning moment for me was realizing that the weights are not just a math decision — they're actually a values decision. When I chose to make mood worth 2.0 points and genre only 0.5, I was saying that how a song makes you feel matters more than what category it belongs to. That seemed obvious to me as a listener but it had real consequences in the output. Songs got rewarded or penalized based on a choice I made, not based on anything inherent in the music itself. That's basically how all recommender systems work, someone decides what matters, bakes it into numbers, and then the algorithm treats those numbers like facts.
 
 The bias part surprised me the most. I expected the bias to come from my scoring formula but a lot of it actually came from the dataset. When the sad plus high-energy profile kept surfacing the wrong song I spent a while adjusting weights before realizing the real problem was that only one sad song existed in the catalog. No algorithm can give good variety when the data doesn't have it. That made me think differently about real platforms,  Spotify's recommendations probably feel better not just because the algorithm is smarter but because they have millions of songs so the formula has real options to choose from. A biased dataset will always produce biased output no matter how carefully you tune the weights.
 
+**If I had more time I would:**
+- Expand the catalog to at least 100 songs so edge case profiles have real options to work with
+- Replace binary mood matching with similarity scoring so "chill" and "relaxed" are treated as close rather than completely different
+- Add a confidence indicator to the AI explanation so it notes when the catalog gap is the real problem, not the algorithm
+- Let users type their own preferences instead of using hardcoded profiles
 
----
 
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
 
