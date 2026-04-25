@@ -76,7 +76,7 @@ flowchart TD
 
     I[Return Top K results] --> J
 
-    J[Claude API\nai_explainer.py\nGenerates natural-language explanation] --> K
+    J[Groq API\nai_explainer.py\nGenerates natural-language explanation] --> K
 
     K{Output Guardrail\nValidate response} -- valid --> L
     K -- invalid / error --> M

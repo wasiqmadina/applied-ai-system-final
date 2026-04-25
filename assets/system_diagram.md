@@ -14,7 +14,7 @@ flowchart TD
 
     E[Top 5 ranked songs\nwith scores + reasons] --> F
 
-    F[Claude API\nai_explainer.py\nGenerates natural-language\nexplanation of results] --> G
+    F[Groq API\nai_explainer.py\nGenerates natural-language\nexplanation of results] --> G
 
     G{Output Guardrail\nValidate response is\nwell-formed} -- valid --> H
     G -- invalid / error --> I
@@ -54,7 +54,7 @@ score_song() × 18 songs
 recommend_songs() ──► Top 5 ranked songs
     │
     ▼
-Claude API (ai_explainer.py)
+Groq API (ai_explainer.py)
     │
     ▼
 Guardrail validation
